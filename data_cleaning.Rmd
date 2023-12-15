@@ -1,0 +1,91 @@
+---
+title: "tw"
+author: "chinying"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load library
+```{r}
+library(tidyverse)
+library(dplyr)
+library(leaflet)
+library(ggplot2)
+```
+
+
+### Load data
+```{r}
+scenic <- read_csv("Scenic_Spot_C_f.csv")
+activity <- read_csv("Activity_C_f.csv")
+hotel <- read_csv("Hotel_C_f.csv")
+restaurant <- read_csv("Restaurant_C_f.csv")
+```
+Observe data
+```{r}
+scenic
+```
+List column names
+```{r}
+names(scenic)
+```
+Select useful columns and save in keep array
+```{r}
+keep <- c("Id","Name","Description","Tel","Add","Region","Picture1","Px","Py","Website","Opentime","Start","End")
+```
+
+Observe hotel, scenic, activity table
+```{r}
+hotel
+```
+```{r}
+restaurant
+```
+```{r}
+activity
+```
+Upon closer examination, I've noticed that all the tables share common columns. Therefore, it makes sense to merge them into a single table. The only distinguishing factors among these tables are the "start" and "end" columns for activities and the "open time" column for scenic and restaurant tables. To unify these tables effectively, we'll include these additional columns for the tables that currently lack them before the concatenation process.
+
+```{r}
+s <- scenic[ , names(scenic) %in% keep]
+s['Start'] <- NA
+s['End'] <- NA
+h <- hotel[ , names(hotel) %in% keep]
+h['Start'] <- NA
+h['End'] <- NA
+h['Opentime'] <- NA
+r <- restaurant[ , names(restaurant) %in% keep]
+r['Start'] <- NA
+r['End'] <- NA
+a <- activity[ , names(activity) %in% keep]
+a['Opentime'] <- NA
+```
+
+Concatenate all tables to one
+```{r}
+all <- rbind(s,h,r,a)
+all["Type"] <- substr(all$Id, start = 1, stop = 2)
+all$Start <- as.Date(all$Start)
+all$End <- as.Date(all$End)
+str(all)
+```
+Replace type value for recognisable names
+```{r}
+all$Type <- str_replace(all$Type,"C1", "Scenic Spots")
+all$Type <- str_replace(all$Type,"C2", "Events")
+all$Type <- str_replace(all$Type,"C3", "Restaurants")
+all$Type <- str_replace(all$Type,"C4", "Accomodations")
+```
+
+Save output in csv
+```{r}
+write.csv(all, "all.csv", row.names = FALSE)
+```
+
+
+
+
